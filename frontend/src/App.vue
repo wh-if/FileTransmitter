@@ -206,9 +206,7 @@ onMounted(() => {
     <div class="file-list">
       <div class="file-list-header">
         <h2>已上传文件</h2>
-        <button class="btn refresh" @click="fetchFiles" title="刷新文件列表">
-          <span class="refresh-icon">🔄</span>
-        </button>
+        <button class="btn refresh" @click="fetchFiles">刷新</button>
       </div>
       <div v-if="files.length === 0" class="no-files">
         暂无文件
@@ -589,19 +587,14 @@ h1 {
 }
 
 .btn.refresh {
-  background: none;
-  padding: 8px;
-  border-radius: 50%;
+  background-color: #909399;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
   transition: all 0.3s;
 }
 
 .btn.refresh:hover {
-  background-color: #f5f7fa;
-  transform: rotate(180deg);
-}
-
-.refresh-icon {
-  font-size: 18px;
-  display: block;
+  background-color: #a6a9ad;
 }
 </style>

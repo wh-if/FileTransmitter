@@ -38,15 +38,17 @@ app.get('/files', (req, res) => {
       return res.status(500).json({ error: '无法读取文件列表' });
     }
     
-    const fileList = files.map(file => {
-      const stats = fs.statSync(path.join(uploadDir, file));
-      return {
-        name: file,
-        size: stats.size,
-        date: stats.mtime,
-        type: path.extname(file).toLowerCase()
-      };
-    });
+    const fileList = files
+      .filter(file => file !== '.gitkeep') // 过滤掉 .gitkeep 文件
+      .map(file => {
+        const stats = fs.statSync(path.join(uploadDir, file));
+        return {
+          name: file,
+          size: stats.size,
+          date: stats.mtime,
+          type: path.extname(file).toLowerCase()
+        };
+      });
     
     res.json(fileList);
   });
