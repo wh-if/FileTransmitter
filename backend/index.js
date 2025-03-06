@@ -17,7 +17,7 @@ const utils = {
     }
     return dirPath;
   },
-  
+
   // 获取本机局域网IP
   getLocalIP: () => {
     const interfaces = os.networkInterfaces();
@@ -95,24 +95,34 @@ const routes = {
   // 获取文件列表
   getFiles: (req, res) => {
     utils.ensureDir(CONFIG.UPLOAD_DIR);
-    
+
     fs.readdir(CONFIG.UPLOAD_DIR, (err, files) => {
       if (err) {
         return res.status(500).json({ error: '无法读取文件列表' });
       }
-      
       const fileList = files
         .filter(file => file !== '.gitkeep')
         .map(file => {
-          const stats = fs.statSync(path.join(CONFIG.UPLOAD_DIR, file));
-          return {
-            name: file,
-            size: stats.size,
-            date: stats.mtime,
-            type: path.extname(file).toLowerCase()
-          };
-        });
-      
+          const filePath = path.join(CONFIG.UPLOAD_DIR, file);
+          // 检查文件是否存在
+          if (!fs.existsSync(filePath)) {
+            return null;
+          }
+          try {
+            const stats = fs.statSync(filePath);
+            return {
+              name: file,
+              size: stats.size,
+              date: stats.mtime,
+              type: path.extname(file).toLowerCase()
+            };
+          } catch (err) {
+            console.error(`获取文件信息失败 (${file}):`, err);
+            return null;
+          }
+        })
+        .filter(Boolean); // 过滤掉不存在的文件
+
       res.json(fileList);
     });
   },
@@ -121,7 +131,7 @@ const routes = {
   handleVideoStream: (req, res) => {
     const filename = req.params.filename;
     const filePath = path.join(CONFIG.UPLOAD_DIR, filename);
-    
+
     try {
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: '文件不存在' });
@@ -129,7 +139,7 @@ const routes = {
 
       const stat = fs.statSync(filePath);
       const fileSize = stat.size;
-      
+
       // 设置通用响应头
       const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -138,7 +148,7 @@ const routes = {
         'Cache-Control': `public, max-age=${CONFIG.CACHE_DURATION}`,
         'Content-Type': utils.getMimeType(filename)
       };
-      
+
       Object.entries(headers).forEach(([key, value]) => {
         res.setHeader(key, value);
       });
@@ -198,7 +208,7 @@ app.delete('/files/:filename', (req, res) => {
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: '文件不存在' });
   }
-  
+
   fs.unlink(filePath, (err) => {
     if (err) {
       return res.status(500).json({ error: '删除文件失败' });
