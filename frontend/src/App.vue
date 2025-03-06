@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-const API_URL = `http://${window.location.hostname}:3000`
+const API_URL = `http://${window.location.hostname}`
 const files = ref([])
 const uploading = ref(false)
 const uploadProgress = ref(0)

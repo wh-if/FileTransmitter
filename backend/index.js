@@ -5,10 +5,23 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const port = 3000;
+const port = 80;
 
 // 启用CORS
 app.use(cors());
+
+// 静态文件服务
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// 根路由返回前端打包后的HTML文件
+app.get('/', (req, res) => {
+  const htmlPath = path.join(__dirname, 'dist', 'index.html');
+  if (fs.existsSync(htmlPath)) {
+    res.sendFile(htmlPath);
+  } else {
+    res.status(404).send('前端文件未找到，请先构建前端项目');
+  }
+});
 
 // 配置文件存储
 const storage = multer.diskStorage({
@@ -128,6 +141,25 @@ app.get('/stream/:filename', (req, res) => {
   }
 });
 
+const os = require('os');
+
+// 获取本机局域网IP
+function getLocalIP() {
+  const interfaces = os.networkInterfaces();
+  for (let devName in interfaces) {
+    const iface = interfaces[devName];
+    for (let i = 0; i < iface.length; i++) {
+      const alias = iface[i];
+      if (alias.family === 'IPv4' && !alias.internal) {
+        return alias.address;
+      }
+    }
+  }
+  return '0.0.0.0';
+}
+
+const localIP = getLocalIP();
+
 app.listen(port, '0.0.0.0', () => {
-  console.log(`服务器运行在 http://0.0.0.0:${port}`);
-}); 
+  console.log(`服务器运行在 http://${localIP}:${port}`);
+});
