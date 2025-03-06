@@ -189,11 +189,20 @@ const routes = {
 // 路由注册
 app.get('/', routes.home);
 app.get('/files', routes.getFiles);
-app.post('/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
+app.post('/upload', upload.array('files', 10), (req, res) => {
+  if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: '没有文件被上传' });
   }
-  res.json({ message: '文件上传成功', filename: req.file.originalname });
+  
+  const uploadedFiles = req.files.map(file => ({
+    filename: file.originalname,
+    size: file.size
+  }));
+  
+  res.json({
+    message: `成功上传 ${req.files.length} 个文件`,
+    files: uploadedFiles
+  });
 });
 app.get('/stream/:filename', routes.handleVideoStream);
 app.get('/download/:filename', (req, res) => {

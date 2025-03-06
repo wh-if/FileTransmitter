@@ -62,37 +62,40 @@ const triggerFileInput = () => {
 
 // 处理文件选择
 const handleFileSelect = (event) => {
-  const file = event.target.files[0]
-  if (file) {
-    uploadFile(file)
+  const selectedFiles = Array.from(event.target.files)
+  if (selectedFiles.length > 0) {
+    uploadFiles(selectedFiles)
   }
 }
 
 // 处理拖放
 const handleDrop = (event) => {
-  const file = event.dataTransfer.files[0]
-  if (file) {
-    uploadFile(file)
+  const droppedFiles = Array.from(event.dataTransfer.files)
+  if (droppedFiles.length > 0) {
+    uploadFiles(droppedFiles)
   }
 }
 
-// 上传文件
-const uploadFile = async (file) => {
+// 上传多个文件
+const uploadFiles = async (files) => {
   const formData = new FormData()
-  formData.append('file', file)
-  
+  files.forEach(file => {
+    formData.append('files', file)
+  })
+
   uploading.value = true
   uploadProgress.value = 0
-  
+
   try {
     const response = await fetch(`${API_URL}/upload`, {
       method: 'POST',
       body: formData
     })
-    
+
     if (response.ok) {
+      const result = await response.json()
       uploadProgress.value = 100
-      showToast('文件上传成功', 'success')
+      showToast(`成功上传 ${result.files.length} 个文件`, 'success')
       setTimeout(() => {
         uploading.value = false
         uploadProgress.value = 0
@@ -186,14 +189,15 @@ onMounted(() => {
 
 <template>
   <div class="container">
-        
+
     <!-- 上传区域 -->
     <div class="upload-area" @dragover.prevent @drop.prevent="handleDrop">
-      <input type="file" ref="fileInput" @change="handleFileSelect" style="display: none">
+      <input type="file" ref="fileInput" @change="handleFileSelect" multiple style="display: none">
       <div class="upload-box" @click="triggerFileInput">
         <div v-if="!uploading">
           <i class="upload-icon">📁</i>
           <p>点击或拖拽文件到此处上传</p>
+          <p class="upload-tip">支持多文件上传</p>
         </div>
         <div v-else class="progress">
           <div class="progress-bar" :style="{ width: uploadProgress + '%' }"></div>
@@ -246,23 +250,14 @@ onMounted(() => {
         <h3>{{ currentVideo?.name }}</h3>
         <button class="btn close" @click="closeVideo">×</button>
       </div>
-      <video 
-        controls 
-        autoplay
-        :src="`${API_URL}/stream/${currentVideo?.name}`"
-      >
+      <video controls autoplay :src="`${API_URL}/stream/${currentVideo?.name}`">
         您的浏览器不支持视频播放
       </video>
     </div>
   </div>
 
   <!-- Toast 提示 -->
-  <div 
-    v-if="toast.show" 
-    class="toast" 
-    :class="toast.type"
-    @click="toast.show = false"
-  >
+  <div v-if="toast.show" class="toast" :class="toast.type" @click="toast.show = false">
     {{ toast.message }}
   </div>
 </template>
@@ -321,7 +316,7 @@ h1 {
   background-color: #fff;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
 .file-item {
@@ -499,17 +494,17 @@ h1 {
   .container {
     padding: 10px;
   }
-  
+
   .upload-box {
     padding: 20px;
   }
-  
+
   .file-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
-  
+
   .file-actions {
     width: 100%;
     justify-content: flex-end;
@@ -573,6 +568,7 @@ h1 {
     opacity: 0;
     transform: translate(-50%, 20px);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, 0);
@@ -596,5 +592,11 @@ h1 {
 
 .btn.refresh:hover {
   background-color: #a6a9ad;
+}
+
+.upload-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 8px;
 }
 </style>
